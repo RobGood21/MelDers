@@ -1,0 +1,7 @@
+
+
+
+
+
+GPIOR0
+bit0 true:set WS pixels False: lees data

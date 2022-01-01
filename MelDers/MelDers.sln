@@ -9,6 +9,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FastLED-master-3.1.6", "Lib
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EEPROM-2.0", "Libraries\EEPROM\2.0\EEPROM\EEPROM-2.0.vcxitems", "{C5329E08-8414-4196-A54D-773F5EB73FE7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{491BDD50-D909-4DE4-AE6D-123DCEC52EBF}"
+	ProjectSection(SolutionItems) = preProject
+		Beschrijving Melders.txt = Beschrijving Melders.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Libraries\FastLED-master\3.1.6\FastLED-master\FastLED-master-3.1.6.vcxitems*{1508940d-f520-4913-b6d1-2615531d03c8}*SharedItemsImports = 9
