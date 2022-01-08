@@ -10,35 +10,110 @@
 */
 
 #include <EEPROM.h>
-# define aantalSR 2//4 
+# define aantalSR 4 //4 
 # define lines 6 //aantal te lezen invoer lijnen A0~A?
 //4x6x8=192 melders
 
+
+unsigned long shifttimer;
 
 unsigned long periode;
 byte bitcount = 0;
 byte SRcount = 0; //shiftregister count
 //byte lastline[lines];
 byte melderstatus[aantalSR*lines]; //aantal max melders
+byte lastport;
+int countout = 0; //output teller
+byte countread = 0;
+
 
 void setup() {
 	Serial.begin(9600);
-
 	//set pins
 	DDRB |= (1 << 3); //pin 11 serial out MOSI
 	DDRB |= (1 << 5); //Pin 13 shift clock
 
-	//init
+	DDRB |= (1 << 0); //Pin8 data S88
 
+	//pullups to interupt pins
+
+	PCICR |= (1 << 2); //PCIE2 enabled
+	PCMSK2 |= (1 << 7); //clock
+	PCMSK2 |= (1 << 6); //reset
+}
+
+ISR(PCINT2_vect) {
+	byte p = PIND;
+	p = p >> 6; p = p << 6; // isolate pin6 and 7
+	byte changed = p ^ lastport;
+	for (byte i = 7; i > 5; i--) {
+		if (changed & (1 << i)) { //is pin changed?
+			if (p & (1 << i)) { //is pin high? 
+				switch (i) {
+				case 7: //clock
+					clock();
+					break;
+				case 6: //reset
+					reset();
+					break;
+				}
+				//Serial.println(i);
+			}
+		}
+	}
+	lastport = p;
+}
+
+void clock() { //called from ISR
+	//byte/ bit berekenen
+	if (countout < lines*aantalSR*4) { //Melders kan tot 192 melders verwerken, S88 kan er 512
+		byte n = countout;
+		byte b = 0;
+		while (n > 7) {
+			b++;
+			n -= 8;
+		}
+
+		if (melderstatus[b] & (1 << n)) {
+			PORTB |= (1 << 0); //zet data
+		}
+		else {
+			PORTB &= ~(1 << 0); //reset data
+		}
+	}
+	else { //>192 S88 kan tot 512
+		PORTB &= ~(1 << 0); //reset data
+	}
+
+	//melderstatus[b] &=~(1 << n); //clear melder buffer
+
+	countout++;
+}
+void reset() { //called from ISR
+	countout = 0;
+	countread++;
+	if (countread > 20) {
+		countread = 0;
+		clearmelders();
+	}
 }
 
 void loop() {
-	shift();
-	if (millis() - periode > 1000) {
-		periode = millis();
-		activemelders();
+	if (micros() - shifttimer > 10) {
+		shifttimer = micros();
+		GPIOR0 ^= (1 << 0);
+		if (GPIOR0 & (1 << 0)) {
+			shift();
+		}
+		else {
+			read();
+		}
 	}
 
+	//if (millis() - periode > 1000) {
+	//	periode = millis();
+	//	activemelders();
+	//}
 }
 
 void activemelders() {
@@ -48,11 +123,12 @@ void activemelders() {
 		for (byte b = 0; b < 8; b++) { //bits in byte
 			if (melderstatus[i] & (1 << b)) { //hoog
 				m = i * aantalSR * 8 + b;
-				Serial.println(m);
+				Serial.print(m);
 			}
 		}
 	}
-	clearmelders();
+	//clearmelders();
+	//Serial.println("");
 }
 
 void shift() {
@@ -64,16 +140,13 @@ void shift() {
 
 	//Serial.println(bitcount);
 
-	read();
+	//read();
 
-	bitcount++;
-	if (bitcount > 7) {
-		bitcount = 0;
-		SRcount++;
-		if (SRcount == aantalSR)SRcount = 0;
-	}
+
 }
+
 void read() {
+
 	//alleen de AAN meten 
 	//inputs high-active
 	byte p = PINC; //lees port
@@ -89,13 +162,21 @@ void read() {
 			setmelder(m);
 		}
 	}
+
+	bitcount++;
+
+	if (bitcount > 7) {
+		bitcount = 0;
+		SRcount++;
+		if (SRcount == aantalSR)SRcount = 0;
+	}
+
 }
 
 void setmelder(byte melder) {
 	//totaal 192 melders /8=24 status bytes nodig(latchen een actieve sensor)
 	byte bi = melder;
 	byte by = 0;
-
 	while (bi > 7) {
 		by++;
 		bi -= 8;
