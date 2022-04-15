@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Beschrijving Melders.txt = Beschrijving Melders.txt
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IRsensor", "IRsensor\IRsensor.vcxproj", "{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Libraries\EEPROM\2.0\EEPROM\EEPROM-2.0.vcxitems*{c5329e08-8414-4196-a54d-773f5eb73fe7}*SharedItemsImports = 9
@@ -26,6 +28,10 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Debug|x86.ActiveCfg = Debug|Win32
+		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Debug|x86.Build.0 = Debug|Win32
+		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Release|x86.ActiveCfg = Release|Win32
+		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

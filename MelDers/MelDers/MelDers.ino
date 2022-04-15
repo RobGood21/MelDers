@@ -16,6 +16,7 @@
 
 
 unsigned long shifttimer;
+unsigned long cleartimer;
 
 unsigned long periode;
 byte bitcount = 0;
@@ -25,6 +26,11 @@ byte melderstatus[aantalSR*lines]; //aantal max melders
 byte lastport;
 int countout = 0; //output teller
 byte countread = 0;
+
+byte COM_reg; 
+//bit0=true S88 detected 
+
+
 
 
 void setup() {
@@ -86,10 +92,11 @@ void clock() { //called from ISR
 	}
 
 	//melderstatus[b] &=~(1 << n); //clear melder buffer
-
 	countout++;
 }
 void reset() { //called from ISR
+	COM_reg |= (1 << 0); //S88 detected
+
 	countout = 0;
 	countread++;
 	if (countread > 20) {
@@ -110,43 +117,23 @@ void loop() {
 		}
 	}
 
-	//if (millis() - periode > 1000) {
-	//	periode = millis();
-	//	activemelders();
-	//}
-}
-
-void activemelders() {
-	byte m = 0;
-	//debug toont actieve, aangezette melders
-	for (byte i = 0; i < aantalSR*lines; i++) { //alle melderstatus bytes (24)
-		for (byte b = 0; b < 8; b++) { //bits in byte
-			if (melderstatus[i] & (1 << b)) { //hoog
-				m = i * aantalSR * 8 + b;
-				Serial.print(m);
-			}
-		}
+	if (~COM_reg & (1 << 0)) {	
+	if (millis() - cleartimer > 500) {
+		cleartimer = millis();
+		clearmelders();
 	}
-	//clearmelders();
-	//Serial.println("");
 }
 
+
+}
 void shift() {
 	//telkens 1 bit inschuiven of verplaatsen.
 	if (bitcount == 7 & SRcount == aantalSR - 1) PORTB |= (1 << 3); //serial pin high
-
 	PINB |= (1 << 5); PINB |= (1 << 5); //make shift 
 	PORTB &= ~(1 << 3); //reset serial pin
-
-	//Serial.println(bitcount);
-
-	//read();
-
-
 }
 
 void read() {
-
 	//alleen de AAN meten 
 	//inputs high-active
 	byte p = PINC; //lees port
@@ -162,7 +149,6 @@ void read() {
 			setmelder(m);
 		}
 	}
-
 	bitcount++;
 
 	if (bitcount > 7) {
@@ -181,10 +167,10 @@ void setmelder(byte melder) {
 		by++;
 		bi -= 8;
 	}
-
+	if (~melderstatus[by] & (1 << bi)) {
+		Serial.print("Melder #");Serial.println(melder);
+	}	
 	melderstatus[by] |= (1 << bi);
-
-	//Serial.println(melder);
 }
 
 void clearmelders() {
