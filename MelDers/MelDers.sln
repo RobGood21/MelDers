@@ -10,9 +10,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{491BDD50-D909-4DE4-AE6D-123DCEC52EBF}"
 	ProjectSection(SolutionItems) = preProject
 		Beschrijving Melders.txt = Beschrijving Melders.txt
+		LaserSensor beschrijving.txt = LaserSensor beschrijving.txt
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IRsensor", "IRsensor\IRsensor.vcxproj", "{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LaserSensor", "LaserSensor\LaserSensor.vcxproj", "{B5FBE942-5129-4AC4-B8F0-7EF07BF618C6}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -32,6 +35,10 @@ Global
 		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Debug|x86.Build.0 = Debug|Win32
 		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Release|x86.ActiveCfg = Release|Win32
 		{41EE7A99-CD4F-41C1-B4CB-E1E8CDEBF802}.Release|x86.Build.0 = Release|Win32
+		{B5FBE942-5129-4AC4-B8F0-7EF07BF618C6}.Debug|x86.ActiveCfg = Debug|Win32
+		{B5FBE942-5129-4AC4-B8F0-7EF07BF618C6}.Debug|x86.Build.0 = Debug|Win32
+		{B5FBE942-5129-4AC4-B8F0-7EF07BF618C6}.Release|x86.ActiveCfg = Release|Win32
+		{B5FBE942-5129-4AC4-B8F0-7EF07BF618C6}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
