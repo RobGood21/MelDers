@@ -6,6 +6,11 @@
  Modelspoor terugmelding via S88
 
 
+ Via interrupts en een ISR komen de clock en reset van de S88 bus. 
+ De Melders module leest geheel onafhankelijk van de S88 de 192 melders en plaatst dit 
+ in de buffer melderstatus.
+ Met clock wordt 1 voor 1 de melder status uitgezelen en geplaatst op de data pin van de S88
+Reset wist de buffer melderstatus. cyclus begint opnieuw. 
 
 */
 
@@ -30,6 +35,13 @@ byte countread = 0;
 byte COM_reg; 
 //bit0=true S88 detected 
 
+//V2.0  toevoeging met WMapp
+byte CommandCount = 0;
+byte AantalBytes = 0;
+byte Command[16]; //buffer opslag start met 16bytes
+
+//timer voor de serial read 1ms? 
+unsigned long SerialTimer = 0;
 
 
 
@@ -70,7 +82,62 @@ ISR(PCINT2_vect) {
 	lastport = p;
 }
 
-void clock() { //called from ISR
+void SerialRead() {
+	//een connected boolean is niet nodig omdat alleen bij een connection met een DCCmonitor WMapp verder gaat.
+	int inData;
+	while (Serial.available() > 0) {
+		inData = Serial.read();
+
+		if (CommandCount > 0) {
+			if (CommandCount == 1)AantalBytes = inData;
+			Command[CommandCount - 1] = inData;
+			CommandCount++;
+			if (CommandCount > AantalBytes) { //volledig command
+				CommandCount = 0;
+				Command_exe(); //voer commando uit
+				//Commandclear();
+			}
+		}
+		else if (inData == 255) { //dus niet groter dan 0 dus 0 en 0xFF
+			//start byte voor command, niks mee doen dus alleen teller omhoog
+			CommandCount++; //volgende doorloop counter op 1			
+		}
+	}
+}
+void Command_exe() {
+	//eerste byte 255 wordt niet ingelezen, tweede byte = aantalbytes en naar command[0]
+    //command[0] = aantalbytes
+	//command[1]  1=request data
+	//command[2]  1=ProductID
+	switch (Command[1]){
+	case 1:  //request data 
+		switch (Command[1]) {
+		case 1: //request voor de productid
+			//Stuur productId naar WMapp
+			Command[0] = 255; //start com
+			Command[1] = 3; //aantal bytes van de boodschap
+			Command[2] = 101; //data is product id
+			Command[3] = 30; //productId van MelDers
+			Serial.write(Command, 4); //aantal te zenden bytes incl. de 'attentie'  byte 255
+
+			break;
+		}
+		break;
+
+
+	}
+}
+void SendMelder(byte melder) {
+	Command[0] = 255; //start byte
+	Command[1] = 3; //aantal bytes
+	Command[2] = 110; //stuur actieve melder
+	Command[3] = melder; 
+	Serial.write(Command, 4);
+}
+
+
+
+void clock() { //called from ISR, van S88 poort centrale
 	//byte/ bit berekenen
 	if (countout < lines*aantalSR*4) { //Melders kan tot 192 melders verwerken, S88 kan er 512
 		byte n = countout;
@@ -94,7 +161,8 @@ void clock() { //called from ISR
 	//melderstatus[b] &=~(1 << n); //clear melder buffer
 	countout++;
 }
-void reset() { //called from ISR
+void reset() { //called from ISR, van S88 centrale
+
 	COM_reg |= (1 << 0); //S88 detected
 
 	countout = 0;
@@ -106,14 +174,21 @@ void reset() { //called from ISR
 }
 
 void loop() {
-	if (micros() - shifttimer > 10) {
-		shifttimer = micros();
-		GPIOR0 ^= (1 << 0);
+	
+	//serial zonder timer? 
+	SerialRead(); //V2.0
+
+
+
+	if (micros() - shifttimer > 10) { //timer lezen shiftregisters 10us per melder
+		shifttimer = micros(); //reset timer
+
+		GPIOR0 ^= (1 << 0); //toggle flag
 		if (GPIOR0 & (1 << 0)) {
-			shift();
+			shift(); //schuif laatste 
 		}
 		else {
-			read();
+			read(); 
 		}
 	}
 
@@ -128,9 +203,11 @@ void loop() {
 }
 void shift() {
 	//telkens 1 bit inschuiven of verplaatsen.
-	if (bitcount == 7 & SRcount == aantalSR - 1) PORTB |= (1 << 3); //serial pin high
-	PINB |= (1 << 5); PINB |= (1 << 5); //make shift 
-	PORTB &= ~(1 << 3); //reset serial pin
+	//alle melders in 1 lijn gelezen
+	if (bitcount == 7 && SRcount == aantalSR - 1) PORTB |= (1 << 3); //serial pin high, een true in de eerste van de lijn
+
+	PINB |= (1 << 5); PINB |= (1 << 5); //make shift 1 stap  
+	PORTB &= ~(1 << 3); //reset serial pin 
 }
 
 void read() {
@@ -168,7 +245,9 @@ void setmelder(byte melder) {
 		bi -= 8;
 	}
 	if (~melderstatus[by] & (1 << bi)) {
-		Serial.print("Melder #");Serial.println(melder);
+
+	//	Serial.print("Melder #");Serial.println(melder);
+		SendMelder(melder);
 	}	
 	melderstatus[by] |= (1 << bi);
 }
